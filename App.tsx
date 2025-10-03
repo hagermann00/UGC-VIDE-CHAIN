@@ -7,8 +7,10 @@ import HistoryPanel from './components/HistoryPanel';
 import SequencePlayer from './components/SequencePlayer';
 import { SparklesIcon, PlayIcon } from './components/icons';
 import { HistoryItem, ImageInput, ChainItem } from './types';
+import ApiKeyInput from './components/ApiKeyInput';
 
 const MAX_CHAINS = 5;
+const API_KEY_STORAGE_KEY = 'ugc-video-gemini-api-key';
 
 const createNewChainItem = (): ChainItem => ({
   id: `${Date.now()}-${Math.random()}`,
@@ -26,11 +28,19 @@ const createNewChainItem = (): ChainItem => ({
 });
 
 const App: React.FC = () => {
+  const [apiKey, setApiKey] = useState<string>('');
   const [chains, setChains] = useState<ChainItem[]>([createNewChainItem()]);
   const [history, setHistory] = useState<HistoryItem[]>(getHistory());
   const [selectedHistoryId, setSelectedHistoryId] = useState<string | null>(null);
   const [isPlayingSequence, setIsPlayingSequence] = useState(false);
   const chainsContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const storedApiKey = localStorage.getItem(API_KEY_STORAGE_KEY);
+    if (storedApiKey) {
+      setApiKey(storedApiKey);
+    }
+  }, []);
 
   useEffect(() => {
     // Scroll to the end when a new chain is added
@@ -41,6 +51,11 @@ const App: React.FC = () => {
       });
     }
   }, [chains.length]);
+  
+  const handleSaveApiKey = (newKey: string) => {
+    setApiKey(newKey);
+    localStorage.setItem(API_KEY_STORAGE_KEY, newKey);
+  };
 
   const updateChain = (id: string, updates: Partial<ChainItem>) => {
     setChains(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
@@ -85,6 +100,11 @@ const App: React.FC = () => {
   };
 
   const handleGenerateVideo = useCallback(async (id: string, shouldChain: boolean) => {
+    if (!apiKey) {
+        updateChain(id, { error: 'Please set your Gemini API key first.' });
+        return;
+    }
+
     const chain = chains.find(c => c.id === id);
     if (!chain || !chain.prompt.trim()) {
       updateChain(id, { error: 'Please enter a prompt.' });
@@ -116,6 +136,7 @@ const App: React.FC = () => {
       }
 
       const { videoBlob, finalPrompt } = await generateVideo(
+        apiKey,
         chain.prompt,
         chain.duration, 
         startImageInput, 
@@ -157,7 +178,7 @@ const App: React.FC = () => {
     } finally {
       updateChain(id, { isLoading: false, loadingMessage: '' });
     }
-  }, [chains]);
+  }, [chains, apiKey]);
 
   const handleSelectHistoryItem = (item: HistoryItem) => {
     const lastChain = chains[chains.length - 1];
@@ -216,6 +237,9 @@ const App: React.FC = () => {
           <p className="text-gray-400 mt-2 text-lg">
             Create captivating video sequences with Gemini.
           </p>
+          <div className="mt-4">
+            <ApiKeyInput apiKey={apiKey} onSave={handleSaveApiKey} />
+          </div>
            {sequenceVideos.length > 0 && (
                 <div className="mt-4">
                     <button
@@ -236,6 +260,7 @@ const App: React.FC = () => {
                       <ChainScene
                           chain={chain}
                           sceneIndex={index}
+                          isApiKeySet={!!apiKey}
                           isChainLimitReached={chains.length >= MAX_CHAINS}
                           onPromptChange={(p) => updateChain(chain.id, { prompt: p })}
                           onDurationChange={(d) => handleDurationChange(chain.id, d)}

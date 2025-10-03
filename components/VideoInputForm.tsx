@@ -16,6 +16,7 @@ interface VideoInputFormProps {
   endImagePreview: string | null;
   onEndImageChange: (file: File | null) => void;
   isChainLimitReached: boolean;
+  isApiKeySet: boolean;
 }
 
 const ImageUploader: React.FC<{
@@ -82,6 +83,7 @@ const VideoInputForm: React.FC<VideoInputFormProps> = ({
     endImagePreview,
     onEndImageChange,
     isChainLimitReached,
+    isApiKeySet,
 }) => {
   const startFileInputRef = useRef<HTMLInputElement>(null);
   const endFileInputRef = useRef<HTMLInputElement>(null);
@@ -133,6 +135,8 @@ const VideoInputForm: React.FC<VideoInputFormProps> = ({
         handleRemoveImage(onEndImageChange, endFileInputRef);
     }
   };
+
+  const isGenerateDisabled = isLoading || !prompt.trim() || !isApiKeySet;
 
   return (
     <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
@@ -230,12 +234,16 @@ const VideoInputForm: React.FC<VideoInputFormProps> = ({
         )}
       </div>
 
-
+      {!isApiKeySet && (
+        <div className="text-center text-yellow-400 bg-yellow-900/50 p-3 rounded-lg border border-yellow-700">
+            <p className="font-semibold text-sm">Please set your Gemini API key above to enable generation.</p>
+        </div>
+      )}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
             <button
             type="button"
             onClick={() => onSubmit(false)}
-            disabled={isLoading || !prompt.trim()}
+            disabled={isGenerateDisabled}
             className="w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-purple-500 disabled:bg-gray-600 disabled:text-gray-400 disabled:cursor-not-allowed transition duration-200"
             >
             {isLoading ? (
@@ -257,7 +265,7 @@ const VideoInputForm: React.FC<VideoInputFormProps> = ({
                 <button
                     type="button"
                     onClick={() => onSubmit(true)}
-                    disabled={isLoading || !prompt.trim()}
+                    disabled={isGenerateDisabled}
                     className="w-full flex justify-center items-center gap-2 py-3 px-4 border border-purple-400 rounded-lg shadow-sm text-base font-medium text-purple-300 bg-purple-900/30 hover:bg-purple-900/60 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-purple-500 disabled:bg-gray-700 disabled:border-gray-600 disabled:text-gray-500 disabled:cursor-not-allowed transition duration-200"
                 >
                     <PlusIcon />

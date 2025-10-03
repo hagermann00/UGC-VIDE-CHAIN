@@ -8,6 +8,7 @@ interface ChainSceneProps {
     chain: ChainItem;
     sceneIndex: number;
     isChainLimitReached: boolean;
+    isApiKeySet: boolean;
     onPromptChange: (prompt: string) => void;
     onDurationChange: (duration: number) => void;
     onStartImageChange: (file: File | null) => void;
@@ -22,6 +23,7 @@ const ChainScene: React.FC<ChainSceneProps> = ({
     chain,
     sceneIndex,
     isChainLimitReached,
+    isApiKeySet,
     onPromptChange,
     onDurationChange,
     onStartImageChange,
@@ -57,6 +59,7 @@ const ChainScene: React.FC<ChainSceneProps> = ({
                 endImagePreview={chain.endImagePreview}
                 onEndImageChange={onEndImageChange}
                 isChainLimitReached={isChainLimitReached}
+                isApiKeySet={isApiKeySet}
             />
 
             <div className="mt-8 flex-grow min-h-[300px] flex items-center justify-center bg-gray-900/40 rounded-xl border border-dashed border-gray-600 p-4">

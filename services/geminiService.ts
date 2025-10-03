@@ -1,12 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { ImageInput } from '../types';
 
-if (!process.env.API_KEY) {
-  throw new Error("API_KEY environment variable is not set");
-}
-
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
 const POLLING_INTERVAL_MS = 10000; // 10 seconds
 
 const loadingMessages = [
@@ -19,7 +13,9 @@ const loadingMessages = [
     "Almost there, the premiere is near!"
 ];
 
-const describeImage = async (image: ImageInput): Promise<string> => {
+const describeImage = async (apiKey: string, image: ImageInput): Promise<string> => {
+  if (!apiKey) throw new Error("API key is missing.");
+  const ai = new GoogleGenAI({ apiKey });
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
@@ -39,19 +35,22 @@ const describeImage = async (image: ImageInput): Promise<string> => {
 
 
 export const generateVideo = async (
+  apiKey: string,
   prompt: string,
   duration: number,
   startImage: ImageInput | null,
   endImage: ImageInput | null,
   onProgress: (message: string) => void
 ): Promise<{ videoBlob: Blob; finalPrompt: string }> => {
+    if (!apiKey) throw new Error("API key is missing.");
+    const ai = new GoogleGenAI({ apiKey });
     try {
         let finalPrompt = prompt;
         let imageForGeneration: ImageInput | null = startImage;
 
         if (startImage && endImage) {
             onProgress('Analyzing end image...');
-            const endImageDescription = await describeImage(endImage);
+            const endImageDescription = await describeImage(apiKey, endImage);
             finalPrompt = `A video that starts resembling the provided image and transitions to a scene described as: "${endImageDescription}". The overall theme is: "${prompt}".`;
             imageForGeneration = startImage;
         } else if (endImage && !startImage) {
@@ -98,7 +97,6 @@ export const generateVideo = async (
             throw new Error('Video generation succeeded, but no download link was found.');
         }
 
-        const apiKey = process.env.API_KEY;
         const response = await fetch(`${downloadLink}&key=${apiKey}`);
 
         if (!response.ok) {
