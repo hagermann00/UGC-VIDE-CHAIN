@@ -1,0 +1,5 @@
+{
+  "name": "UGC Video Generator",
+  "description": "Create stunning user-generated style videos from a text prompt and an optional image using the power of Gemini AI.",
+  "requestFramePermissions": []
+}
